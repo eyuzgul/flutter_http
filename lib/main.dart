@@ -1,82 +1,91 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'models/post.dart';
+import 'datas.dart';
 
-Future<Album> fetchAlbum() async {
-  final response =
-      await http.get('https://jsonplaceholder.typicode.com/albums/79');
-  if (response.statusCode == 200) {
-    return Album.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Hata oluştu222');
-  }
+void main() {
+  runApp(ListViewApp());
 }
 
-class Album {
-  final int userId;
-  final int id;
-  final String title;
-
-  Album({this.userId, this.id, this.title});
-
-  factory Album.fromJson(Map<String, dynamic> json) {
-    return Album(userId: json['userId'], id: json['id'], title: json['title']);
-  }
-}
-
-void main() => runApp(MyApp());
-
-class MyApp extends StatefulWidget {
-  MyApp({Key key}) : super(key: key);
-
+class ListViewApp extends StatefulWidget {
   @override
-  _MyAppState createState() => _MyAppState();
+  _ListViewState createState() => _ListViewState();
 }
 
-class _MyAppState extends State<MyApp> {
-  Future<Album> futureAlbum;
+class _ListViewState extends State<ListViewApp> {
+  List<Post> items = List<Post>();
 
   @override
   void initState() {
     super.initState();
-    futureAlbum = fetchAlbum();
+    items = makeList();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Http ornegi',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Http denemesi'),
-        ),
-        body: Center(
-          child: FutureBuilder<Album>(
-              future: futureAlbum,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Column(
-                    children: [
-                      Text(
-                          "user: " +
-                              snapshot.data.userId.toString() +
-                              " - id: " +
-                              snapshot.data.id.toString(),
-                          style: TextStyle(fontSize: 30, color: Colors.red)),
-                      Text(snapshot.data.title,
-                          style: TextStyle(fontSize: 30, color: Colors.red)),
-                    ],
-                  );
-                } else if (snapshot.hasError) {
-                  return Text("${snapshot.error}");
-                }
-
-                return CircularProgressIndicator();
-              }),
+      title: 'JSA ListView Demo',
+      home: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('ListView Demo'),
+            centerTitle: true,
+            backgroundColor: Colors.red,
+          ),
+          body: Center(
+            child: ListView.builder(
+                itemCount: items.length,
+                padding: const EdgeInsets.all(15.0),
+                itemBuilder: (context, position) {
+                  Post item = items[position];
+                  return Dismissible(
+                      key: Key(item.id.toString()),
+                      onDismissed: (direction) {
+                        print(direction.index.toString());
+                        // setState(() {
+                        //   items.removeAt(position);
+                        // });
+                      },
+                      background: Container(
+                        color: Colors.redAccent,
+                      ),
+                      child: Column(
+                        children: <Widget>[
+                          Divider(height: 5.0),
+                          ListTile(
+                            title: Text(item.title),
+                            subtitle: Text(item.body),
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.blueAccent,
+                              radius: 5.0,
+                              child: Text('User ${item.userId}'),
+                            ),
+                            onTap: () => myToast(context, "listtile tab event"),
+                          ),
+                        ],
+                      ));
+                }),
+          ),
         ),
       ),
     );
+  }
+
+  static void myToast(context, String msg) {
+    Scaffold.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red,
+        elevation: 5,
+        onVisible: () => print("asdfasdf"),
+        action: SnackBarAction(
+          label: "OK",
+          textColor: Colors.blue,
+          onPressed: () {
+            myToast(context, "onaylandı");
+          },
+        ),
+        padding: EdgeInsets.all(10),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(20),
+        duration: Duration(milliseconds: 1000),
+        content: Text(msg)));
   }
 }
